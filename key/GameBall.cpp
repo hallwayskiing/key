@@ -1,6 +1,6 @@
 #include "GameBall.h"
 
-void GameBall::logo()
+void GameBall::showLogo()
 {
 	gotoxy(MAPWIDTH / 2 - 22, MAPHEIGHT - 23);
 	printf("■■■        ■■■       ■       ■  \n");
@@ -17,122 +17,7 @@ void GameBall::logo()
 	gotoxy(MAPWIDTH / 2 - 22, MAPHEIGHT - 17);
 	printf("■■■       ■■■ ■     ■■     ■■");
 }
-void GameBall::Model()
-{
-	while (1) {
-		Map();
-		logo();
-		//速度和难度、开始游戏
-		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 4);
-		printf("Back -> ");
-		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 6);
-		printf("Start-> ");
-		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 8);
-		printf("Speed-> \n");
-		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 10);
-		printf("Model-> ");
-		switch (updown(4))
-		{		
-		case 0://难度选择
-		{
-			Map();
-			logo();
-			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 6);
-			printf("Easy->");
-			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 8);
-			printf("Normal->");
-		    gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 10);
-			printf("Hard->  ");
-			modelChoice = updown(3);
-			break;
-		}
-		case 1://速度选择
-		{
-			Map();
-			logo();
-			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 6);
-			printf("Slow->");
-			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 8);
-			printf("Normal->");
-			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 10);
-			printf("Fast->  ");
-			switch (updown(3)) 
-			{
-			case 0: speed = 50; break;
-			case 1: speed = 75; break;
-			case 2: speed = 100; break;		
-			}
-			break;
-		}
-		case 2://开始游戏
-		{
-			startFlag = 1;
-			return;
-		}
-		case 3: //返回主菜单
-			startFlag = 0; return;
-		}
-	}
-}
-void GameBall::Init()
-{
-	Map();
 
-	//新游戏时重置游戏参数
-	srand((unsigned)time(0));
-	score = 0;
-	key = 0;
-
-	switch (modelChoice)
-	{
-	case 0: boardLength = 4;
-		break;
-	case 1: boardLength = 6;
-		break;
-	case 2: boardLength = 8;
-		break;
-	}
-
-	//初始挡板
-	for (int i = 0; i < boardLength; i++)
-	{
-		board[i] = MAPWIDTH / 2 - 2 + 2 * i;
-		gotoxy(board[i], MAPHEIGHT - 3);
-		printf("■");
-	}
-
-	//跳板
-	for (int i = MAPWIDTH / 2 - 15; i <= MAPWIDTH / 2 + 15; i += 2)//i+=2是因为横向字符占用两个位置
-	{
-		gotoxy(i, 10);
-		printf("■");
-	}
-
-	//玻璃板
-	for (int i = 0; i <= MAPWIDTH; i += 2)//i+=2是因为横向字符占用两个位置
-	{
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 6);
-		gotoxy(i, 2);
-		boardMap[i + 1 + 200] = 1;
-		boardMap[i + 200] = 1;
-		printf("■");
-		gotoxy(i, 4);
-		boardMap[i + 1 + 400] = 1;
-		boardMap[i + 400] = 1;
-		printf("■");
-		gotoxy(i, 6);
-		boardMap[i + 1 + 600] = 1;
-		boardMap[i + 600] = 1;
-		printf("■");
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
-	}
-
-	//初始分数条
-	gotoxy(0, 0);
-	std::cout << "Score: 0";
-
-	gotoxy(MAPWIDTH, 0);
-}
 void GameBall::boardMove()
 {
 	if (_kbhit())//如果用户按下了键盘中的某个键
@@ -217,7 +102,8 @@ void GameBall::ballMove(Ball &ball)
 	ball.pre_x = ball.x, ball.pre_y = ball.y;
 	ball.hitFlag = 0;
 }
-bool GameBall::Reflect(Ball &ball)
+
+bool GameBall::reflect(Ball &ball)
 {
 	//撞击角落，方向相反
 	if (ball.x <= 1 && ball.y == MAPHEIGHT - 3) 
@@ -313,53 +199,167 @@ bool GameBall::Reflect(Ball &ball)
 	return true;
 }
 
-void GameBall::ShowScore()
+void GameBall::showScore()
 {
 	gotoxy(0, 0);
 	std::cout << "Score: "<<score;
 	gotoxy(MAPWIDTH, 0);
 }
 
-void GameBall::Start()
-	{
-		Ball ball_1(Direction::leftUp), ball_2(Direction::leftUp), ball_3(Direction::leftUp);
-		Model();
-		Init();
-		if (!startFlag)return;
-		while (Reflect(ball_1)&& Reflect(ball_2)&& Reflect(ball_3))
-		{
-			boardMove();
-			ballMove(ball_1);
-			ballMove(ball_2);
-			ballMove(ball_3);
-			ShowScore();
-			Sleep(speed);
-		}
-
-		Sleep(2000);
-		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 10);
-		printf("Game Over!\n");
-		gotoxy(0, 0);
-		Sleep(2000);
-		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 8);
-		printf("Score：%d\n", score);
-		gotoxy(0, 0);
-		Sleep(2000);
-		while (_kbhit())int i = _getch();
+bool GameBall::chooseMode()
+{
+	while (1) {
+		showMap();
+		showLogo();
+		//速度和难度、开始游戏
+		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 4);
+		printf("Back -> ");
 		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 6);
-		printf("Press R to replay");
-		gotoxy(0, 0);
-		char ch = _getch();
-		if (ch == 'r' || ch == 'R') Start();
-		return;
+		printf("Start-> ");
+		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 8);
+		printf("Speed-> ");
+		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 10);
+		printf("Mode -> ");
+		switch (choose(4))
+		{		
+		case 0://难度选择
+			showMap();
+			showLogo();
+			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 6);
+			printf("Easy->");
+			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 8);
+			printf("Normal->");
+		    gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 10);
+			printf("Hard->  ");
+			switch (choose(3))
+			{
+			case 0: boardLength = 4;
+				break;
+			case 1: boardLength = 6;
+				break;
+			case 2: boardLength = 8;
+				break;
+			}
+			break;
+		case 1://速度选择
+			showMap();
+			showLogo();
+			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 6);
+			printf("Slow->");
+			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 8);
+			printf("Normal->");
+			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 10);
+			printf("Fast->  ");
+			switch (choose(3)) 
+			{
+			case 0: speed = 50; break;
+			case 1: speed = 75; break;
+			case 2: speed = 100; break;		
+			}
+			break;
+		case 2://开始游戏
+			return true;
+		case 3: //返回主菜单
+			return false;
+		}
+	}
+}
+
+bool GameBall::run()
+{
+	Ball ball_1(Direction::leftUp), ball_2(Direction::leftUp), ball_3(Direction::leftUp);
+	while (reflect(ball_1) && reflect(ball_2) && reflect(ball_3))
+	{
+		boardMove();
+		ballMove(ball_1);
+		ballMove(ball_2);
+		ballMove(ball_3);
+		showScore();
+		Sleep(speed);
 	}
 
-	GameBall::GameBall()
+	Sleep(2000);
+	gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 10);
+	printf("Game Over!\n");
+	gotoxy(0, 0);
+	Sleep(2000);
+	gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 8);
+	printf("Score：%d\n", score);
+	gotoxy(0, 0);
+	Sleep(2000);
+	while (_kbhit())int i = _getch();
+	gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 6);
+	printf("Press R to replay");
+	gotoxy(0, 0);
+	char ch = _getch();
+	if (toupper(ch) == 'R') return true;
+	return false;
+}
+
+void GameBall::load()
+{
+	showMap();
+
+	//新游戏时重置游戏参数
+	srand((unsigned)time(0));
+
+	//初始挡板
+	for (int i = 0; i < boardLength; i++)
 	{
-		Start();
+		board[i] = MAPWIDTH / 2 - 2 + 2 * i;
+		gotoxy(board[i], MAPHEIGHT - 3);
+		printf("■");
 	}
 
-	GameBall::Ball::Ball(Direction x)
+	//跳板
+	for (int i = MAPWIDTH / 2 - 15; i <= MAPWIDTH / 2 + 15; i += 2)//i+=2是因为横向字符占用两个位置
 	{
-		Ball::direc = x;
+		gotoxy(i, 10);
+		printf("■");
 	}
+
+	//玻璃板
+	for (int i = 0; i <= MAPWIDTH; i += 2)//i+=2是因为横向字符占用两个位置
+	{
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 6);
+		gotoxy(i, 2);
+		boardMap[i + 1 + 200] = 1;
+		boardMap[i + 200] = 1;
+		printf("■");
+		gotoxy(i, 4);
+		boardMap[i + 1 + 400] = 1;
+		boardMap[i + 400] = 1;
+		printf("■");
+		gotoxy(i, 6);
+		boardMap[i + 1 + 600] = 1;
+		boardMap[i + 600] = 1;
+		printf("■");
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
+	}
+
+	//初始分数条
+	gotoxy(0, 0);
+	std::cout << "Score: 0";
+
+	gotoxy(MAPWIDTH, 0);
+}
+
+void GameBall::init()
+{
+	//重置参数
+	boardLength = 6;
+	speed = 75;
+	key = 0;
+	pre_key = 0;
+	score = 0;
+}
+
+GameBall::GameBall()
+{
+	start();
+}
+
+GameBall::Ball::Ball(Direction x)
+{
+	Ball::direc = x;
+}

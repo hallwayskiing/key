@@ -1,14 +1,19 @@
 #pragma once
-#include"Engine.h"
-class GameGuess
+#include"Game.h"
+class GameGuess:public Game
 {
-	int randomNum = 0;//随机给定的数，每次开始时随机生成
-	int guessNum = 0;//用户输入的数
-	int guessTime = 0;//猜的次数
+private:
+	int randomNum;//随机给定的数，每次初始化g时随机生成
+	int guessNum;//用户输入的数
+	int guessTimes;//猜的次数
 
-public:
-	void Start();	
+	void init();
 
+	void load();
+
+	bool run();
+
+public:	
 	GameGuess();
 };
 

@@ -13,11 +13,11 @@
 
 inline void gotoxy(int LocationX, int LocationY);
 
-inline int updown(int num_of_choice);//上下选择模式,参数为选项数目,返回值为已选择的项目
+inline int choose(int num_of_choice);//上下选择模式,参数为选项数目,返回值为已选择的项目
 
-void logoMain();
+void showMainLogo();
 
-inline void Map();
+inline void showMap();
 
 void info();
 

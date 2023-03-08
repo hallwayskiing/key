@@ -8,7 +8,7 @@ inline void gotoxy(int x, int y)
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
 }
 
-inline int updown(int x)//上下选择模式,参数为选项数目,返回值为已选择的项目
+inline int choose(int x)//上下选择模式,参数为选项数目,返回值为已选择的项目
 {
 	int MOD = 0;
 	COORD d{};
@@ -41,7 +41,7 @@ inline int updown(int x)//上下选择模式,参数为选项数目,返回值为已选择的项目
 	}
 }
 
-void logoMain()
+void showMainLogo()
 {
 	gotoxy(MAPWIDTH / 2 - 30, MAPHEIGHT *0.2);
 	printf("  ■■■      ■       ■■         ■■■        ■■■  \n");
@@ -59,7 +59,7 @@ void logoMain()
 	printf("■     ■     ■      ■■■       ■■■■      ■■■■   ");
 }
 
-inline void Map()
+inline void showMap()
 {
 	system("cls");
 
@@ -84,8 +84,8 @@ inline void Map()
 
 void info()
 {
-	Map();
-	logoMain();
+	showMap();
+	showMainLogo();
 	gotoxy(MAPWIDTH / 2 - 10, MAPHEIGHT - 10);
 	printf("MADE BY: NIE88 ");
 	gotoxy(MAPWIDTH / 2 - 10, MAPHEIGHT - 8);
@@ -112,8 +112,8 @@ void log()
 		string usernameLog;
 		string passwordLog;
 		string readLine;
-		Map();
-		logoMain();
+		showMap();
+		showMainLogo();
 		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 4);
 		printf("More -> ");
 		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 6);
@@ -123,13 +123,13 @@ void log()
 		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 10);
 		printf("Sign -> ");
 
-		switch (updown(4))
+		switch (choose(4))
 		{
 		case 0://注册
 		{
 			system("cls");
-			Map();
-			logoMain();
+			showMap();
+			showMainLogo();
 			gotoxy(MAPWIDTH / 2 - 10, MAPHEIGHT - 10);
 			printf("Account: ");
 			cin >> usernameReg;
@@ -150,8 +150,8 @@ void log()
 		case 1://登陆
 		{
 			system("cls");
-			Map();
-			logoMain();
+			showMap();
+			showMainLogo();
 			registerList.clear();
 			registerList.seekp(0, ios::beg);
 			gotoxy(MAPWIDTH / 2 - 10, MAPHEIGHT - 10);

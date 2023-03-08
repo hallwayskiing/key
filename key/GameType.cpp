@@ -1,40 +1,52 @@
 #include "GameType.h"
 
-void GameType::Start()
-{
-	//打开文件
-	std::fstream wordList;
-	wordList.open("D:\\words.txt", std::ios::in);
+void GameType::init() {
+	best_time = 999;
+	best_num = 0;
+	lineNum = 0;
+	wordList.open("words.txt", std::ios::in);
 	if (!wordList.is_open())
 	{
 		printf("OPEN FILE ERROR!");
 		exit(EXIT_FAILURE);
 	}
+	while (wordList.good()) {
+		lineNum++;
+		std::string str;
+		getline(wordList, str);
+	}
+}
 
+void GameType::load() {
 	//初始化界面
-	Map();
+	showMap();
 	gotoxy(MAPWIDTH / 2 - 4, 1);
 	printf("Type");
 	gotoxy(MAPWIDTH / 2 - 10, 2);
 	printf("Press 1 to start");
 	gotoxy(0, 0);
+	char startFlag;
 	while (startFlag = _getch())if (startFlag == '1')break;
 	Sleep(1000);
+}
 
-	timeuse = (int)time(0);
-	numRight = 0;
+bool GameType::run()
+{
+	std::string readLine, typeLine;
+	int timeuse = (int)time(0);
+	int numRight = 0;
 	for (int i = 0; i < 10; i++)
 	{
 		wordList.clear();
 		wordList.seekp(0, std::ios::beg);
 		srand((unsigned)time(0) + rand());
-		randomLine = rand() % 40 + 1;
-		while (--randomLine)getline(wordList, readLine);//移动到第x行后读取,丢弃前x-1行
+		int randomLine = rand() % lineNum;
+		while (randomLine-->0)getline(wordList, readLine);//移动到第x行后读取,丢弃前x-1行
 		getline(wordList, readLine);
 		gotoxy(MAPWIDTH / 2 - 8, 3 + i * 2);
 		std::cout << readLine;
 		gotoxy(MAPWIDTH / 2 - 8, 4 + i * 2);
-		std::cin >> typeLine;
+		getline(std::cin, typeLine);
 		if (readLine == typeLine) numRight++;
 	}
 	timeuse = (int)time(0) - timeuse;
@@ -47,13 +59,14 @@ void GameType::Start()
 	gotoxy(MAPWIDTH / 2 - 8, 26);
 	printf("Score: %d      Best: %d", numRight * 10, best_num * 10);
 	gotoxy(MAPWIDTH / 2 - 8, 27);
+	wordList.close();
 	printf("Press R to replay");
 	char ch = _getch();
-	if (ch == 'r' || ch == 'R') Start();
-	return;
+	if (toupper(ch) == 'R') return true;
+	return false;
 }
 
 GameType::GameType()
 {
-	Start();
+	start();
 }

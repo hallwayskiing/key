@@ -1,14 +1,12 @@
 #pragma once
-#include"Engine.h"
-class GameBall
+#include"Game.h"
+class GameBall:public Game
 {
 private:
-	int startFlag = 1;//判断是否开始游戏
-	int modelChoice = 1;//难度设置：板长
-	int boardLength = 6;
-	int speed = 75;
-	int key = 75, pre_key = 75;//记录按键方向，初始为左
-	int score = 0;//记录分数
+	int boardLength;
+	int speed;
+	int key, pre_key;//记录按键方向，初始为左
+	int score;//记录分数
 	std::map<int,int>boardMap;
 
 	enum class Direction//记录球的方向，初始为左上
@@ -28,22 +26,25 @@ private:
 		Direction direc;
 		Ball(Direction);
 	};
+
     void ballMove(Ball &ball);
-
-	void logo();
-
-	void Model();
-
-	void Init();
-
+	
 	void boardMove();
 
-	bool Reflect(Ball &ball);
+	bool reflect(Ball &ball);
+
+	void showLogo();
+
+	void init();
+
+	bool chooseMode();
+
+	void load();
+
+	bool run();
 
 public:
-	void ShowScore();
-
-	void Start();
+	void showScore();
 
 	GameBall();
 };

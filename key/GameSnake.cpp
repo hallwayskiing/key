@@ -1,6 +1,6 @@
 #include "GameSnake.h"
 
-void GameSnake::logo()
+void GameSnake::showLogo()
 {
 	gotoxy(MAPWIDTH / 2 - 30, MAPHEIGHT - 23);
 	printf("  ■■■      ■■■      ■■■      ■    ■      ■■ \n");
@@ -17,56 +17,15 @@ void GameSnake::logo()
 	gotoxy(MAPWIDTH / 2 - 30, MAPHEIGHT - 17);
 	printf(" ■■■     ■     ■     ■■■ ■   ■    ■     ■■■");
 }
-void GameSnake::Init()//初始化
-{
-	Map();
-	srand((unsigned)time(0) + rand());
-	while (1)
-	{
-		food.x = rand() % (MAPWIDTH - 2) + 2;
-		food.y = rand() % (MAPHEIGHT - 1) + 1;
-		//生成的食物横坐标必须与初始化时蛇头所在坐标的奇偶一致，因为一个字符占两个字节位置，若不一致会导致吃食物的时候只吃到一半
-		if (food.x % 2 == 1)
-			break;
-	}
 
-	snake.x.resize(snake.len, 0);
-	snake.y.resize(snake.len, 0);
-
-	//将光标移到食物的坐标处打印食物
-	gotoxy(food.x, food.y);
-	printf("★");
-	//在屏幕中间生成蛇头
-	snake.x[0] = MAPWIDTH / 2;
-	snake.y[0] = MAPHEIGHT / 2;
-	//打印蛇头
-	gotoxy(snake.x[0], snake.y[0]);
-	printf("■");
-
-	//生成初始蛇身
-	for (int i = 1; i < snake.len; i++)
-	{
-		snake.x[i] = snake.x[static_cast<std::vector<int, std::allocator<int>>::size_type>(i) - 1];
-		snake.y[i] = snake.y[static_cast<std::vector<int, std::allocator<int>>::size_type>(i) - 1] + 1;
-		gotoxy(snake.x[i], snake.y[i]);
-		printf("■");
-	}
-
-	//生成初始分数条
-	gotoxy(0, 0);
-	printf("Score: 0");
-
-	//初始化结束后将光标移到屏幕最上方，避免光标在蛇身处一直闪烁
-	gotoxy(MAPWIDTH, 0);
-	return;
-}
-void GameSnake::Move()
+void GameSnake::move()
 {
 	int pre_key = key;//记录前一个按键的方向
 	if (!crossFlag)//穿越边界时不允许转弯
 	{
-		if (autoFlag)//自动模式下用随机方向代替用户输入
+		switch (moveMode)
 		{
+		case MoveMode::AUTO://自动模式下用随机方向代替用户输入
 			if (!_kbhit())//按任意键退出自动模式
 			{
 				srand((unsigned)time(0) + rand());
@@ -78,10 +37,9 @@ void GameSnake::Move()
 				case 3:key = 80; break;
 				}
 			}
-			else autoFlag = 0;
-		}
-		else if (findFlag)//寻路模式
-		{
+			else moveMode = MoveMode::NORMAL;
+			break;
+		case MoveMode::FIND://寻路模式
 			if (!_kbhit())
 			{
 				if (food.x > snake.x[0])key = 77;//右
@@ -90,10 +48,9 @@ void GameSnake::Move()
 					if (food.y > snake.y[0])key = 80;//下
 					else if (food.y < snake.y[0])key = 72;//上
 			}
-			else findFlag = 0;
-		}
-		else//正常模式
-		{
+			else moveMode = MoveMode::NORMAL;
+			break;
+		case MoveMode::NORMAL://正常模式
 			if (_kbhit())//如果用户按下了键盘中的某个键
 			{
 				//getch()读取方向键的时候，会返回两次，第一次调用返回0或者224
@@ -104,14 +61,14 @@ void GameSnake::Move()
 				case 'a':
 				case 'A'://按A开启自动模式
 				{
-					autoFlag = 1;
+					moveMode = MoveMode::AUTO;
 					key = pre_key;
 					break;
 				}
 				case 'f':
 				case 'F'://按F开启寻路模式
 				{
-					findFlag = 1;
+					moveMode = MoveMode::FIND;
 					key = pre_key;
 					break;
 				}
@@ -120,6 +77,7 @@ void GameSnake::Move()
 				default: key = pre_key; break;
 				}
 			}
+			break;
 		}
 	}
 
@@ -179,7 +137,8 @@ void GameSnake::Move()
 	crossFlag = 0;
 	return;
 }
-void GameSnake::Food()
+
+void GameSnake::newFood()
 {
 	if (snake.x[0] == food.x && snake.y[0] == food.y || createFlag == 0)//蛇头碰到食物 或者 上次未生成
 	{
@@ -247,14 +206,15 @@ void GameSnake::Food()
 
 	return;
 }
-bool GameSnake::Status()//死亡判定
+
+bool GameSnake::status()//死亡判定
 {
-	if (modelChoice == 2)//Noob模式
+	if (gameMode == GameMode::NOOB)//Noob模式
 	{
 		//碰到边界，从另一边穿出
 		if (snake.y[0] < 2 || snake.y[0] > MAPHEIGHT - 2)
 		{
-			crossFlag = 1;//ch控制move中读取键盘的开关，穿越边界时不允许转弯
+			crossFlag = 1;//crossFlag控制move中读取键盘的开关，穿越边界时不允许转弯
 			gotoxy(snake.x[0], snake.y[0]);
 			printf("  ");
 			snake.y[0] = MAPHEIGHT - snake.y[0];
@@ -273,7 +233,7 @@ bool GameSnake::Status()//死亡判定
 			return true;
 		}
 	}
-	else//当modelChoice=0,1
+	else//不是NOOB模式
 	{
 		//碰到边界，游戏结束
 		if (snake.y[0] < 1 || snake.y[0] > MAPHEIGHT - 1)
@@ -282,7 +242,7 @@ bool GameSnake::Status()//死亡判定
 			return false;
 
 		//碰到蛇身，游戏结束
-		if (modelChoice == 0)//Normal模式
+		if (gameMode == GameMode::NORMAL)//Normal模式
 			for (int i = 1; i < snake.len; i++)
 			{
 				if (snake.x[i] == snake.x[0] && snake.y[i] == snake.y[0])
@@ -292,11 +252,12 @@ bool GameSnake::Status()//死亡判定
 	}
 	return true;
 }
-void GameSnake::Model()
+
+bool GameSnake::chooseMode()
 {
 	while (1) {
-		Map();
-		logo();
+		showMap();
+		showLogo();
 		//速度和难度（死亡判定）、开始游戏
 		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 2);
 		printf("Back -> ");
@@ -307,108 +268,147 @@ void GameSnake::Model()
 		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 8);
 		printf("Speed-> ");
 		gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 10);
-		printf("Model-> ");
+		printf("Mode -> ");
 
-		switch (updown(5))
+		switch (choose(5))
 		{
 		case 0://难度选择
 		{
-			Map();
-			logo();
+			showMap();
+			showLogo();
 			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 6);
 			printf("Noob->");
 			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 8);
 			printf("Easy->");
 			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 10);
 			printf("Normal->");
-			modelChoice = updown(3);
-			break;
-		}
-		case 1://速度选择
-		{
-			Map();
-			logo();
-			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 4);
-			printf("Crazy->");
-			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 6);
-			printf("Slow->");
-			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 8);
-			printf("Normal->");
-			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 10);
-			printf("Fast->  ");
-			switch (updown(4))
-			{
-			case 0: snake.speed = 100; break;
-			case 1: snake.speed = 150; break;
-			case 2: snake.speed = 200; break;
-			case 3:snake.speed = 1; snake.speedChange = 0; break;
+			switch (choose(3)) {
+			case 0:gameMode = GameMode::NORMAL; break;
+			case 1:gameMode = GameMode::EASY; break;
+			case 2:gameMode = GameMode::NOOB; break;
 			}
 			break;
 		}
-		case 2://初始长度
-		{
-			do
+		case 1://速度选择
+			showMap();
+			showLogo();
+			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 4);
+			printf("Crazy->");
+			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 6);
+			printf("Fast->");
+			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 8);
+			printf("Normal->");
+			gotoxy(MAPWIDTH / 2 - 7, MAPHEIGHT - 10);
+			printf("Slow->  ");
+			switch (choose(4))
 			{
-				gotoxy(MAPWIDTH / 2 + 2, MAPHEIGHT - 6);
-				printf("Enter: ");
-				std::cin >> snake.len;
-			} while (snake.len < 1);
+			case 0: snake.speed = 200; break;
+			case 1: snake.speed = 150; break;
+			case 2: snake.speed = 100; break;
+			case 3:snake.speed = 1; snake.speedChange = 0; break;
+			}
 			break;
-		}
+		case 2://初始长度
+			gotoxy(MAPWIDTH / 2 + 2, MAPHEIGHT - 6);
+			printf("Enter: ");
+			std::cin >> snake.len;
+			break;
 		case 3://开始游戏
-		{
-			startFlag = 1;
-			return;
-		}
-
+			return true;
 		case 4://返回主菜单
-			startFlag = 0; return;//进入游戏后立刻退出，返回主菜单
+			return false;//进入游戏后立刻退出，返回主菜单
 		}
 	}
 }
 
-	void GameSnake::Start()
-	{
-		//重置
-		autoFlag = 0;//自动模式关
-		findFlag = 0;//寻路模式关
-		modelChoice = 0;//默认模式为Normal
-		snake.speed = 150;
-		snake.len = 3;
-		key = 72;//默认方向
-		score = 0;
+void GameSnake::init()//初始化
+{
+	//重置参数
+	gameMode = GameMode::NORMAL;//默认游戏模式为NORMAL
+	moveMode = MoveMode::NORMAL;//默认移动模式为NORMAL
+	crossFlag = 0;//转弯控制关
+	key = 72;//默认方向：上
+	eatFlag = 0;//吃到食物的标志
+	createFlag = 1;//生成食物的标志
+	createTimes = 0;
+	snake.speed = 150;
+	snake.speedChange = 2;
+	snake.len = 3;
+	score = 0;
+}
 
-		Model();
-		Init();
-		if (!startFlag)return;
-		while (snake.speed > 0)
-		{
-			if (!Status())
-				break;
-			Move();
-			Food();
-			Sleep(snake.speed);
-		}
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);//默认白色
-		gotoxy(snake.x[0], snake.y[0]);
-		Sleep(2000);
-		logo();
-		gotoxy(MAPWIDTH / 2 - 9, MAPHEIGHT - 10);
-		printf("Game Over!\n");
-		gotoxy(MAPWIDTH / 2 - 9, MAPHEIGHT - 8);
-		printf("Score：%d\n", score);
-		gotoxy(MAPWIDTH, 0);
-		Sleep(3000);
-		while (_kbhit())modelChoice = _getch();
-		gotoxy(MAPWIDTH / 2 - 9, MAPHEIGHT - 6);
-		printf("Press R to replay");
-		gotoxy(MAPWIDTH, 0);
-		char ch = _getch();
-		if (ch == 'r' || ch == 'R') Start();
-		else return;
+void GameSnake::load() {
+	showMap();
+	srand((unsigned)time(0) + rand());
+	while (1)
+	{
+		food.x = rand() % (MAPWIDTH - 2) + 2;
+		food.y = rand() % (MAPHEIGHT - 1) + 1;
+		//生成的食物横坐标必须与初始化时蛇头所在坐标的奇偶一致，因为一个字符占两个字节位置，若不一致会导致吃食物的时候只吃到一半
+		if (food.x % 2 == 1)
+			break;
 	}
 
-	GameSnake::GameSnake()
+	snake.x.resize(snake.len, 0);
+	snake.y.resize(snake.len, 0);
+
+	//将光标移到食物的坐标处打印食物
+	gotoxy(food.x, food.y);
+	printf("★");
+	//在屏幕中间生成蛇头
+	snake.x[0] = MAPWIDTH / 2;
+	snake.y[0] = MAPHEIGHT / 2;
+	//打印蛇头
+	gotoxy(snake.x[0], snake.y[0]);
+	printf("■");
+
+	//生成初始蛇身
+	for (int i = 1; i < snake.len; i++)
 	{
-		Start();
+		snake.x[i] = snake.x[i - 1];
+		snake.y[i] = snake.y[i - 1] + 1;
+		gotoxy(snake.x[i], snake.y[i]);
+		printf("■");
 	}
+
+	//生成初始分数条
+	gotoxy(0, 0);
+	printf("Score: 0");
+
+	//初始化结束后将光标移到屏幕最上方，避免光标在蛇身处一直闪烁
+	gotoxy(MAPWIDTH, 0);
+	return;
+}
+
+bool GameSnake::run()
+{
+	while (snake.speed > 0)
+	{
+		if (!status())
+			break;
+		move();
+		newFood();
+		Sleep(snake.speed);
+	}
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);//默认白色
+	gotoxy(snake.x[0], snake.y[0]);
+	Sleep(2000);
+	showLogo();
+	gotoxy(MAPWIDTH / 2 - 9, MAPHEIGHT - 10);
+	printf("Game Over!\n");
+	gotoxy(MAPWIDTH / 2 - 9, MAPHEIGHT - 8);
+	printf("Score：%d\n", score);
+	gotoxy(MAPWIDTH, 0);
+	Sleep(3000);
+	gotoxy(MAPWIDTH / 2 - 9, MAPHEIGHT - 6);
+	printf("Press R to replay");
+	gotoxy(MAPWIDTH, 0);
+	char ch = _getch();
+	if (toupper(ch) == 'R') return true;
+	return false;
+}
+
+GameSnake::GameSnake()
+{
+	start();
+}
